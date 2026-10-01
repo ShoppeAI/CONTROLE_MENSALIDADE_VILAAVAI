@@ -95,7 +95,7 @@ nav button.on{color:var(--ac)}
 <div class="toast" id="toast"></div>
 
 <script>
-var SEED = {"a":[],"p":[]};
+var SEED = {"a": [{"n": "Flavio Justino silva", "i": "", "p": "Zagueiro", "r": "", "c": ""}, {"n": "Renato Romano", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "Bruno Henrique", "i": "", "p": "Lateral", "r": "", "c": ""}, {"n": "Rogério Francischini", "i": "", "p": "Lateral", "r": "", "c": ""}, {"n": "Felipe", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Marcos Henrique", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "Demilson Zanini", "i": "", "p": "Zagueiro", "r": "", "c": ""}, {"n": "Jean Mendes", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "José Airton", "i": "", "p": "Lateral", "r": "", "c": ""}, {"n": "Lucas Marques", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Luiz Stringhetta", "i": "", "p": "Goleiro", "r": "", "c": ""}, {"n": "João Pedro Domingues branco", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Rafael Gomes petreca", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Lucas Lamas", "i": "", "p": "Zagueiro", "r": "", "c": ""}, {"n": "Manguinha", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Cássio", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Carlos Alberto wach", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Fernando Ricarte", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "Kléber canjerana", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Fabio Moreira", "i": "", "p": "Goleiro", "r": "", "c": ""}, {"n": "Pedro Bigode", "i": "", "p": "Lateral", "r": "", "c": ""}, {"n": "Thales", "i": "", "p": "Goleiro", "r": "", "c": ""}, {"n": "Paulo", "i": "", "p": "Zagueiro", "r": "", "c": ""}, {"n": "Ronivalder Martins Vieira", "i": "", "p": "Lateral", "r": "", "c": ""}, {"n": "Ceará", "i": "", "p": "Meio Campo", "r": "", "c": ""}, {"n": "Everton Assis", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "Tiago Medeiros Baptista", "i": "", "p": "Atacante", "r": "", "c": ""}, {"n": "Diego", "i": "", "p": "Meio Campo", "r": "", "c": ""}], "p": []};
 var FORMAS = ["Pix","Dinheiro","Cartão","Outro"];
 var KEY = "vilaavai_v1";
 var S = null, tab = "resumo", mes = null;
@@ -104,10 +104,11 @@ var S = null, tab = "resumo", mes = null;
 function load(){
   try{ var r = localStorage.getItem(KEY); if(r){ S = JSON.parse(r); } }catch(e){}
   if(!S){
-    S = {atletas: SEED.a.map(function(a){return {n:a.n,i:a.i,p:a.p,r:a.r,c:a.c}}),
+    S = {atletas: SEED.a.map(function(a){return {n:a.n,i:a.i,p:a.p,r:a.r,w:"",c:a.c,b:1}}), removed:[], edited:{}, cob:{},
          pags: SEED.p.map(function(p){return {n:p.n,v:p.v,d:p.d,m:p.m,f:p.f,o:p.o}}), valor:""};
     save();
   }
+  S.removed=S.removed||[]; S.edited=S.edited||{}; S.cob=S.cob||{};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
@@ -196,7 +197,7 @@ function vMais(){
   return '<div class="card"><h3>Exportar dados</h3><div style="color:var(--mut);font-size:14px">Gere uma planilha Excel com o cadastro de atletas, os pagamentos e o resumo do mês. Você escolhe o que incluir.</div>'+
    '<div class="btns"><button class="btn sec" onclick="exportSheet()">📤 Exportar planilha</button></div></div>'+
    '<div class="card"><h3>Mês de '+mes+'</h3><div class="btns" style="margin-top:0"><button class="btn dng" onclick="resetMes()">Resetar pagamentos do mês</button></div></div>'+
-   '<div class="card"><h3>Dados neste aparelho</h3><div style="color:var(--mut);font-size:14px">Tudo fica salvo no seu navegador. Exporte de vez em quando para ter cópia de segurança.</div></div>';
+   '<div class="card"><h3>Base de atletas</h3><div style="color:var(--mut);font-size:14px">Volta a lista para a base do time e apaga as alterações e os pagamentos deste aparelho.</div><div style="color:var(--mut);font-size:14px;margin:6px 0 0">'+(S.baseAt?'Base com '+S.baseN+' atletas, atualizada em '+S.baseAt+'. ':'Base embutida no app. ')+'O que você incluir ou alterar fica salvo e soma à base.</div><div class="btns"><button class="btn" onclick="syncBase(true)">🔄 Atualizar base agora</button><button class="btn sec" onclick="restauraBase()">Restaurar base inicial</button></div></div><div class="card"><h3>Dados neste aparelho</h3><div style="color:var(--mut);font-size:14px">Tudo fica salvo no seu navegador. Exporte de vez em quando para ter cópia de segurança.</div></div>';
 }
 
 // ---- ações ------------------------------------------------------------
@@ -222,6 +223,11 @@ function salvaPag(){
 var _cb=null;
 function confirmar(msg,cb,label){ _cb=cb; openSheet('<h2>Confirmar</h2><div style="margin:8px 0 4px">'+esc(msg)+'</div><div class="btns"><button class="btn dng" style="flex:1" onclick="var f=_cb;closeSheet();if(f)f()">'+(label||"Confirmar")+'</button><button class="btn sec" onclick="closeSheet()">Cancelar</button></div>'); }
 function delPag(i){ confirmar("Excluir este lançamento?",function(){ S.pags.splice(i,1); save(); render(); },"Excluir"); }
+function restauraBase(){
+  confirmar("Restaurar a base inicial? Os atletas e pagamentos atuais deste aparelho serão apagados.",function(){
+    S.atletas=SEED.a.map(function(a){return {n:a.n,i:a.i,p:a.p,r:a.r,w:"",c:a.c,b:1}}); S.removed=[]; S.edited={}; S.pags=[]; S.cob={}; save(); render(); toast("Base inicial restaurada"); syncBase(false);
+  },"Restaurar");
+}
 function resetMes(){
   var m=mes;
   confirmar("Apagar TODOS os pagamentos de "+m+"? Esta ação não pode ser desfeita.",function(){
@@ -241,10 +247,14 @@ function atSheet(i){
 function salvaAt(){
   var n=document.getElementById("an").value.trim(); if(!n){ toast("Informe o nome"); return; }
   var o={n:n,i:document.getElementById("ai").value,p:document.getElementById("ap").value,r:document.getElementById("ar").value.trim(),w:document.getElementById("ae").value.trim(),c:form.i>=0?S.atletas[form.i].c:hoje()};
-  if(form.i>=0) S.atletas[form.i]=o; else S.atletas.push(o);
+  if(form.i>=0){
+    var old=S.atletas[form.i];
+    if(old.b){ var ko=key(old.n); if(key(n)===ko){ o.b=1; S.edited[ko]=1; } else { S.removed.push(ko); } }
+    S.atletas[form.i]=o;
+  } else S.atletas.push(o);
   save(); closeSheet(); render();
 }
-function delAt(){ var i=form.i; confirmar("Excluir este atleta? Os pagamentos dele continuam no histórico.",function(){ S.atletas.splice(i,1); save(); render(); },"Excluir"); }
+function delAt(){ var i=form.i; confirmar("Excluir este atleta? Os pagamentos dele continuam no histórico.",function(){ var a=S.atletas[i]; if(a&&a.b) S.removed.push(key(a.n)); S.atletas.splice(i,1); save(); render(); },"Excluir"); }
 function firstName(n){ return String(n||"").trim().split(/\s+/)[0]; }
 function copiaGen(v){
   var ta=document.createElement("textarea"); ta.value=v; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta);
@@ -361,7 +371,56 @@ function doExport(){
   }).catch(function(e){ if(e&&e.code==="declined") return; xerr("Não foi possível salvar: "+((e&&(e.code||e.message))||e)); });
 }
 
-mes=mesAtual(); load(); render();
+
+// ---- base de atletas (atletas.csv no repositório) ---------------------
+var BASEFILE="atletas.csv", FLD=["n","i","p","r","w"];
+function parseCSV(txt){
+  txt=String(txt||"").replace(/^\uFEFF/,"");
+  var lines=txt.split(/\r?\n/).filter(function(l){return l.trim()});
+  if(!lines.length) return [];
+  var d=(lines[0].split(";").length>=lines[0].split(",").length)?";":",";
+  function cells(l){ var o=[],c="",q=false; for(var k=0;k<l.length;k++){ var ch=l[k];
+    if(q){ if(ch==='"'){ if(l[k+1]==='"'){c+='"';k++;} else q=false; } else c+=ch; }
+    else if(ch==='"') q=true; else if(ch===d){ o.push(c); c=""; } else c+=ch; }
+    o.push(c); return o.map(function(x){return x.trim()}); }
+  var h=cells(lines[0]).map(function(x){return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")});
+  function ix(ns){ for(var k=0;k<h.length;k++) if(ns.indexOf(h[k])>=0) return k; return -1; }
+  var iN=ix(["nome","atleta","name"]), iI=ix(["idade"]), iP=ix(["posicao"]), iW=ix(["whatsapp","telefone","celular","fone"]), iR=ix(["rg"]);
+  if(iN<0) return [];
+  return lines.slice(1).map(cells).filter(function(c){return c[iN]}).map(function(c){
+    return {n:c[iN],i:iI>=0?c[iI]:"",p:iP>=0?c[iP]:"",w:iW>=0?c[iW]:"",r:iR>=0?c[iR]:""}; });
+}
+function applyBase(list){
+  var bmap={}, add=0, rem=0;
+  list.forEach(function(b){ bmap[key(b.n)]=b; });
+  var edited=S.edited;
+  S.atletas=S.atletas.filter(function(a){
+    var k=key(a.n);
+    if(a.b&&!bmap[k]){ if(edited[k]){ a.b=0; return true; } rem++; return false; }
+    return true;
+  });
+  var lmap={}; S.atletas.forEach(function(a){ lmap[key(a.n)]=a; });
+  list.forEach(function(b){
+    var k=key(b.n); if(S.removed.indexOf(k)>=0) return;
+    var l=lmap[k];
+    if(!l){ var n={n:b.n,i:b.i,p:b.p,r:b.r,w:b.w,c:hoje(),b:1}; S.atletas.push(n); lmap[k]=n; add++; return; }
+    l.b=1;
+    FLD.forEach(function(f){ if(b[f]!==""&&b[f]!=null){ if(!edited[k]||!l[f]) l[f]=b[f]; } });
+  });
+  S.removed=S.removed.filter(function(k){return bmap[k]});
+  return {add:add,rem:rem};
+}
+function syncBase(manual){
+  return fetch(BASEFILE+"?v="+Date.now(),{cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error("arquivo não encontrado ("+r.status+")"); return r.text(); }).then(function(txt){
+    var list=parseCSV(txt); if(!list.length) throw new Error("arquivo vazio ou sem a coluna nome");
+    var res=applyBase(list), d=new Date();
+    S.baseAt=pad(d.getDate())+"/"+pad(d.getMonth()+1)+" "+pad(d.getHours())+":"+pad(d.getMinutes()); S.baseN=list.length; save(); render();
+    if(manual) toast(res.add||res.rem?"Base atualizada: +"+res.add+" / -"+res.rem:"Base já está atualizada");
+  }).catch(function(e){ if(manual) toast("Não consegui atualizar a base: "+(e&&e.message||e)); });
+}
+document.addEventListener("visibilitychange",function(){ if(!document.hidden&&!document.getElementById("sheet").classList.contains("on")) syncBase(false); });
+
+mes=mesAtual(); load(); render(); syncBase(false);
 </script>
 </body>
 </html>
